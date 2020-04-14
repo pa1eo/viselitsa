@@ -1,10 +1,8 @@
 # encoding: utf-8
 #
-# Популярная детская игра
+# Популярная детская игра, Виселица
 # https://ru.wikipedia.org/wiki/Виселица_(игра)
-#
-# Этот код необходим только при использовании русских букв на Windows
-if Gem.win_platform?
+if (Gem.win_platform?)
   Encoding.default_external = Encoding.find(Encoding.locale_charmap)
   Encoding.default_internal = __ENCODING__
 
@@ -13,43 +11,32 @@ if Gem.win_platform?
   end
 end
 
-# Подключаем классы Game и ResultPrinter
-#
-# В отличие от require, require_relative ищет файлы .rb (расширение можно не указывать)
-# в той же папке, где лежит сама программа, а не в той папке, откуда мы
-# запускаем программу.
-require_relative "game"
-require_relative "result_printer"
+require 'unicode_utils/upcase'
 
-# Создаем экземпляр класса ResultPrinter, который мы будет использовать для
-# вывода информации на экран.
-printer = ResultPrinter.new
+require_relative 'lib/game'
+require_relative 'lib/result_printer'
+require_relative 'lib/word_reader'
 
-puts "Игра виселица. Версия 2. В рамках интенсива по Ruby on Rails от компании goodprogrammer.ru\n\n"
-sleep 1
+# Записываем версию игры в константу VERSION
+VERSION = 'Игра виселица, версия 5. В рамках интенсива по Ruby on Rails от компании goodprogrammer.ru'
 
-# Объявим локальную переменную slovo и запишем в неё значение параметра запуска
-# программы из командной строки.
-slovo = ARGV[0]
+# Создаем экземпляр класса WordReader
+word_reader = WordReader.new
+words_file_name = "#{File.dirname(__FILE__)}/data/words.txt"
+word = word_reader.read_from_file(words_file_name)
 
-# Создаем объект класса Game, в конструктор которому нужно передать загаданное
-# слово.
-game = Game.new(slovo)
+# Создаем игру и прописываем ее версию с помощью сеттера version=
+game = Game.new(word)
+game.version = VERSION
 
-# Основной цикл программы, в котором развивается игра выходим из цикла, когда
-# объект game (класса Game) сообщит нам, c помощью метода status о том, что игра
-# закончена (status будет равен 1/-1).
-while game.status == 0
-  # Выводим статус игры с помощью метода print_status класса ResultPrinter,
-  # которому на вход надо передать объект класса Game, у которого будет взята
-  # вся необходимая информация для вывода состояния на экран.
+# Теперь экземпляр ResultPrinter-а нельзя создать без игры
+# Именно поэтому порядок создания методов именно такой
+printer = ResultPrinter.new(game)
+
+# Основной игровой цикл остался прежним
+while game.in_progress?
   printer.print_status(game)
-
-  # Просим угадать следующую букву, вызывая у объекта класса Game метод
-  # ask_next_letter.
   game.ask_next_letter
 end
 
-# В конце вызываем метод print_status у объекта класса ResultPrinter ещё раз,
-# чтобы вывести игроку результаты игры.
 printer.print_status(game)
